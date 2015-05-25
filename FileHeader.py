@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # @Author: lime
 # @Date:   2013-10-28 13:39:48
-# @Last Modified by:   Lime
-# @Last Modified time: 2015-01-12 09:51:33
+# @Last Modified by:   Rob
+# @Last Modified time: 2015-05-25 19:07:57
 
 import os
 import sys
@@ -251,6 +251,8 @@ def get_args(syntax_type, options={}):
         args.update({'author': user})
     if 'last_modified_by' not in args:
         args.update({'last_modified_by': user})
+    if 'update_count' not in args:
+        args.update({'update_count': '0'})
 
     return args
 
@@ -568,6 +570,7 @@ LAST_MODIFIED_TIME = 'LAST_MODIFIED_TIME'
 FILE_NAME = 'FILE_NAME'
 FILE_NAME_WITHOUT_EXTENSION = 'FILE_NAME_WITHOUT_EXTENSION'
 FILE_PATH = 'FILE_PATH'
+UPDATE_COUNT = 'UPDATE_COUNT'
 
 class FileHeaderListener(sublime_plugin.EventListener):
 
@@ -577,6 +580,7 @@ class FileHeaderListener(sublime_plugin.EventListener):
     FILE_NAME_WITHOUT_EXTENSION_REGEX = re.compile(
         '\{\{\s*file_name_without_extension\s*\}\}')
     FILE_PATH_REGEX = re.compile('\{\{\s*file_path\s*\}\}')
+    UPDATE_COUNT_REGEX = re.compile('\{\{\s*update_count\s*\}\}')
 
     new_view_id = []
 
@@ -615,6 +619,7 @@ class FileHeaderListener(sublime_plugin.EventListener):
                 if what == LAST_MODIFIED_BY or what == FILE_NAME or \
                         what == FILE_NAME_WITHOUT_EXTENSION or \
                         what == FILE_PATH or what == LAST_MODIFIED_TIME:
+                        what == UPDATE_COUNT:
                     line_pattern = '%s.*\n' % line_header
 
                 else:
@@ -627,6 +632,7 @@ class FileHeaderListener(sublime_plugin.EventListener):
             if(_ != sublime.Region(-1, -1) and _ is not None):
                 a = _.a + space_start
                 b = _.b - 1
+                region = sublime.Region(int(a), int(b))
 
                 file_name = get_file_name(view.file_name())
                 file_name_without_extension = get_file_name_without_extension(
@@ -643,11 +649,14 @@ class FileHeaderListener(sublime_plugin.EventListener):
                     strings = file_name_without_extension
                 elif what == FILE_PATH:
                     strings = file_path
+                elif what == UPDATE_COUNT:
+                    # read the current update count and add 1
+                    new_value = int(view.substr(region))+1
+                    strings = str(new_value)
 
                 spaces = (index - space_start) * ' '
                 strings = spaces + strings
 
-                region = sublime.Region(int(a), int(b))
                 if view.substr(region) != strings:
                     view.run_command('file_header_replace',
                                      {'a': a, 'b': b, 'strings': strings})
@@ -686,6 +695,7 @@ class FileHeaderListener(sublime_plugin.EventListener):
             if view.is_dirty():
                 self.update_automatically(view, LAST_MODIFIED_BY)
                 self.update_automatically(view, LAST_MODIFIED_TIME)
+                self.update_automatically(view, UPDATE_COUNT)
 
     def on_activated(self, view):
         block(view, self.update_automatically, view, FILE_NAME)
