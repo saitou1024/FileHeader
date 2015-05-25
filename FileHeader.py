@@ -614,12 +614,8 @@ class FileHeaderListener(sublime_plugin.EventListener):
                 line_header = re.escape(line_header)
                 if what == LAST_MODIFIED_BY or what == FILE_NAME or \
                         what == FILE_NAME_WITHOUT_EXTENSION or \
-                        what == FILE_PATH:
+                        what == FILE_PATH or what == LAST_MODIFIED_TIME:
                     line_pattern = '%s.*\n' % line_header
-
-                elif what == LAST_MODIFIED_TIME:
-                    line_pattern = '%s\s*%s.*\n' % (
-                        line_header, self.time_pattern())
 
                 else:
                     raise KeyError()
