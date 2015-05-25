@@ -150,6 +150,9 @@ def get_user():
         if status == 0 and output:
             user = output
 
+    if Settings().has('user'):
+        user = Settings().get('user')
+
     return user
 
 
